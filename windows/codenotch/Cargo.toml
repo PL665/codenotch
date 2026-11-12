@@ -23,11 +23,13 @@ semver = "1"
 tiny_http = "0.12"
 dirs = "5"
 notify = "6"
-# default-features = false drops ureq's rustls/webpki stack. Behind FortiGate SSL
-# inspection that stack fails with UnknownIssuer; native-tls uses Windows schannel
-# and trusts the Fortinet root already in the OS store. Keep native-tls for the
-# Antigravity local bridge's self-signed cert on 127.0.0.1 as well.
-ureq = { version = "2", default-features = false, features = ["json", "native-tls", "proxy-from-env"] } # proxy-from-env: honour HTTPS_PROXY, so a machine that reaches api.anthropic.com only through a proxy still reads.
+# native-certs: rustls loads the OS trust store (Windows schannel roots via
+# rustls-native-certs). Needed behind FortiGate SSL inspection — webpki-roots
+# alone fails with UnknownIssuer on the Fortinet-reissued cursor.com cert.
+# native-tls: Antigravity local bridge self-signed cert on 127.0.0.1 only
+# (wired explicitly in antigravity.rs, never the default for public HTTPS).
+# proxy-from-env: honour HTTPS_PROXY when api.anthropic.com is only reachable that way.
+ureq = { version = "2", features = ["json", "native-certs", "native-tls", "proxy-from-env"] }
 native-tls = "0.2"
 png = "0.17" # application icon → PNG (provider marks taken from the installed app's resources)
 ruzstd = "0.7" # pure-Rust zstd: reads the Harness transcripts (.jsonl.zstd)
